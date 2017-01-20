@@ -1,5 +1,7 @@
 # Servie Route
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/blakeembrey/node-servie-route.svg?token=cad036b01035e3b3a2c9738e6f4b36df7ef7dac9bfd8823ab6b31a5947d02c46)](https://greenkeeper.io/)
+
 [![NPM version][npm-image]][npm-url]
 [![NPM downloads][downloads-image]][downloads-url]
 [![Build status][travis-image]][travis-url]
