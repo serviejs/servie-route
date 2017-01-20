@@ -42,15 +42,18 @@
   "devDependencies": {
     "jest": "^18.1.0",
     "rimraf": "^2.5.4",
+    "servie": "0.0.5",
     "throwback": "^2.0.0",
     "tslint": "^4.3.1",
     "tslint-config-standard": "^2.0.0",
     "typescript": "^2.1.5",
     "typings": "^2.1.0"
   },
+  "peerDependencies": {
+    "servie": "^0.0.3"
+  },
   "dependencies": {
     "debug": "^2.6.0",
-    "path-to-regexp": "^1.7.0",
-    "servie": "0.0.3"
+    "path-to-regexp": "^1.7.0"
   }
 }
