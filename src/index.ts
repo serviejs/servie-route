@@ -7,16 +7,16 @@ const log = debug('throwback-route')
 export function create (verb?: string) {
   const method = verb ? verb.toUpperCase() : undefined
 
-  return function <T extends Request, U extends Response> (
+  return function <T extends Request> (
     path: pathToRegexp.Path,
-    fn: (req: T, res: U, params: string[], done: () => Promise<void>) => void | Promise<void>,
+    fn: (req: T, params: string[], done: () => Promise<Response>) => Response | Promise<Response>,
     options?: pathToRegexp.RegExpOptions
   ) {
     const re = pathToRegexp(path, options)
 
     log(`${method || 'all'} ${path} -> ${re}`)
 
-    return function (req: T, res: U, next: () => Promise<void>) {
+    return function (req: T, next: () => Promise<Response>) {
       if (!matches(req, method)) {
         return next()
       }
@@ -26,7 +26,7 @@ export function create (verb?: string) {
       if (m) {
         const args = m.slice(1).map(decode)
         debug(`${req.method} ${path} matches ${req.Url.pathname} ${args}`)
-        return fn(req, res, args, next)
+        return fn(req, args, next)
       }
 
       return next()

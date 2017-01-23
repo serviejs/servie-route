@@ -26,11 +26,11 @@ const animals = [
 ]
 
 const app = compose([
-  get('/pets', function (req, res, params, next) {
-    res.body = animals
+  get('/pets', function (req) {
+    return new Response(req, { body: animals })
   }),
-  get('/pets/:id', function (req, res, params, next) {
-    res.body = animals[params[0]]
+  get('/pets/:id', function (req, params) {
+    return new Response(req, { body: animals[Number(params[0])] })
   })
 ])
 ```
