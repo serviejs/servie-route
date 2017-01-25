@@ -48,11 +48,11 @@ describe('throwback-route', () => {
     ]
 
     const app = compose([
-      get('/pets', function (req) {
-        return new Response(req, { body: animals })
+      get('/pets', function () {
+        return new Response({ body: animals })
       }),
-      get('/pets/:id', function (req, params) {
-        return new Response(req, { body: animals[Number(params[0])] })
+      get('/pets/:id', function (_req, params) {
+        return new Response({ body: animals[Number(params[0])] })
       })
     ])
 
@@ -68,8 +68,8 @@ describe('throwback-route', () => {
 /**
  * Respond with "hello world".
  */
-function helloWorld (req: Request) {
-  return new Response(req, {
+function helloWorld () {
+  return new Response({
     status: 200,
     body: 'hello world'
   })
@@ -80,8 +80,9 @@ function helloWorld (req: Request) {
  */
 function finalhandler (req: Request) {
   return function () {
-    return Promise.resolve(new Response(req, {
-      status: 404
+    return Promise.resolve(new Response({
+      status: 404,
+      body: `Cannot ${req.method} ${req.url}`
     }))
   }
 }
