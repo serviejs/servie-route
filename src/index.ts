@@ -2,7 +2,7 @@ import debug = require('debug')
 import pathToRegexp = require('path-to-regexp')
 import { Request, Response } from 'servie'
 
-const log = debug('throwback-route')
+const log = debug('servie-route')
 
 export function create (verb?: string) {
   const method = verb ? verb.toUpperCase() : undefined

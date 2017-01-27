@@ -2,7 +2,7 @@ import { compose } from 'throwback'
 import { get } from './index'
 import { Request, Response } from 'servie'
 
-describe('throwback-route', () => {
+describe('servie-route', () => {
   it('should match a route', () => {
     const app = compose([
       get('/test', helloWorld)
