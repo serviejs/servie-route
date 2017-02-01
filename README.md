@@ -29,8 +29,8 @@ const app = compose([
   get('/pets', function () {
     return new Response({ body: animals })
   }),
-  get('/pets/:id', function (req, params) {
-    return new Response({ body: animals[Number(params[0])] })
+  get('/pets/:id', function (req) {
+    return new Response({ body: animals[Number(req.params[0])] })
   })
 ])
 ```
