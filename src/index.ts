@@ -4,19 +4,26 @@ import { Request, Response } from 'servie'
 
 const log = debug('servie-route')
 
+export interface RequestParams {
+  params: string[]
+}
+
+/**
+ * Create a method handler (used internally to create `get`, `post`, etc).
+ */
 export function create (verb?: string) {
   const method = verb ? verb.toUpperCase() : undefined
 
   return function <T extends Request> (
     path: pathToRegexp.Path,
-    fn: (req: T, params: string[], done: () => Promise<Response>) => Response | Promise<Response>,
+    fn: (req: T & RequestParams, done: () => Promise<Response>) => Response | Promise<Response>,
     options?: pathToRegexp.RegExpOptions
   ) {
     const re = pathToRegexp(path, options)
 
     log(`${method || 'all'} ${path} -> ${re}`)
 
-    return function (req: T, next: () => Promise<Response>) {
+    return function (req: T, next: () => Promise<Response>): Promise<Response> {
       if (!matches(req, method)) {
         return next()
       }
@@ -24,9 +31,9 @@ export function create (verb?: string) {
       const m = req.Url.pathname && re.exec(req.Url.pathname)
 
       if (m) {
-        const args = m.slice(1).map(decode)
-        debug(`${req.method} ${path} matches ${req.Url.pathname} ${args}`)
-        return fn(req, args, next)
+        const params = m.slice(1).map(decode)
+        debug(`${req.method} ${path} matches ${req.Url.pathname} ${params}`)
+        return Promise.resolve(fn(Object.assign(req, { params }), next))
       }
 
       return next()
