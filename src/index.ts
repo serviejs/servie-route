@@ -12,31 +12,28 @@ export interface RequestParams {
  * Create a method handler (used internally to create `get`, `post`, etc).
  */
 export function create (verb?: string) {
-  const method = verb ? verb.toUpperCase() : undefined
+  const matches = toMatch(verb)
 
   return function <T extends Request> (
     path: pathToRegexp.Path,
     fn: (req: T & RequestParams, done: () => Promise<Response>) => Response | Promise<Response>,
     options?: pathToRegexp.RegExpOptions
   ) {
-    const re = pathToRegexp(path, options)
+    const keys: pathToRegexp.Key[] = []
+    const re = pathToRegexp(path, keys, options)
 
-    log(`${method || 'all'} ${path} -> ${re}`)
+    log(`${verb || '*'} ${path} -> ${re}`)
 
     return function (req: T, next: () => Promise<Response>): Promise<Response> {
-      if (!matches(req, method)) {
-        return next()
-      }
+      if (!matches(req)) return next()
 
       const m = req.Url.pathname && re.exec(req.Url.pathname)
 
-      if (m) {
-        const params = m.slice(1).map(decode)
-        debug(`${req.method} ${path} matches ${req.Url.pathname} ${params}`)
-        return Promise.resolve(fn(Object.assign(req, { params }), next))
-      }
+      if (!m) return next()
 
-      return next()
+      const params = m.slice(1).map(decode)
+      debug(`${req.method} ${path} matches ${req.Url.pathname} ${params}`)
+      return Promise.resolve(fn(Object.assign(req, { params }), next))
     }
   }
 }
@@ -61,6 +58,17 @@ function decode (value: string | undefined) {
 /**
  * Check request matches.
  */
-function matches (req: Request, method: string | undefined) {
-  return !method || (req.method === method) || (req.method === 'HEAD' && method === 'GET')
+function toMatch (verb?: string): (req: Request) => boolean {
+  if (!verb) return () => true
+
+  const method = verb.toLowerCase()
+
+  if (method === 'get') {
+    return req => {
+      const m = req.method.toLowerCase()
+      return m === 'get' || m === 'head'
+    }
+  }
+
+  return req => req.method.toLowerCase() === method
 }

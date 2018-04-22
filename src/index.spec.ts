@@ -1,88 +1,60 @@
 import { compose } from 'throwback'
 import { get } from './index'
 import { Request, Response } from 'servie'
+import { createBody } from 'servie/dist/body/node'
+import { send } from 'servie-send'
+import { finalhandler } from 'servie-finalhandler'
 
 describe('servie-route', () => {
-  it('should match a route', () => {
+  it('should match a route', async () => {
     const app = compose([
-      get('/test', helloWorld)
+      get('/test', req => send(req, 'hello world'))
     ])
 
     const req = new Request({ method: 'get', url: '/test' })
+    const res = await app(req, finalhandler(req))
 
-    return app(req, finalhandler(req))
-      .then((res) => {
-        expect(res.status).toBe(200)
-
-        return res.text().then((body) => expect(body).toBe('hello world'))
-      })
+    expect(res.statusCode).toBe(200)
+    expect(await res.body.text()).toBe('hello world')
   })
 
-  it('should not match when path does not equal', () => {
-    const s = compose([
-      get('/test', helloWorld)
+  it('should not match when path does not equal', async () => {
+    const app = compose([
+      get('/test', req => send(req, 'hello world'))
     ])
 
     const req = new Request({ method: 'get', url: '/' })
+    const res = await app(req, finalhandler(req))
 
-    return s(req, finalhandler(req))
-      .then((res) => expect(res.status).toBe(404))
+    expect(res.statusCode).toEqual(404)
   })
 
-  it('should not match when method does not equal', () => {
+  it('should not match when method does not equal', async () => {
     const app = compose([
-      get('/test', helloWorld)
+      get('/test', req => send(req, 'hello world'))
     ])
 
     const req = new Request({ method: 'delete', url: '/test' })
+    const res = await app(req, finalhandler(req))
 
-    return app(req, finalhandler(req))
-      .then((res) => expect(res.status).toBe(404))
+    expect(res.statusCode).toBe(404)
   })
 
-  it('should work with parameters', () => {
-    const animals = [
-      'rabbit',
-      'dog',
-      'cat'
-    ]
+  it('should work with parameters', async () => {
+    const animals = ['rabbit', 'dog', 'cat']
 
     const app = compose([
       get('/pets', function () {
-        return new Response({ body: animals })
+        return new Response({ body: createBody(animals) })
       }),
       get('/pets/:id', function (req) {
-        return new Response({ body: animals[Number(req.params[0])] })
+        return new Response({ body: createBody(animals[Number(req.params[0])]) })
       })
     ])
 
     const req = new Request({ method: 'get', url: '/pets/1' })
+    const res = await app(req, finalhandler(req))
 
-    return app(req, finalhandler(req))
-      .then((res) => {
-        return res.text().then(body => expect(body).toEqual('dog'))
-      })
+    expect(await res.body.text()).toEqual('dog')
   })
 })
-
-/**
- * Respond with "hello world".
- */
-function helloWorld () {
-  return new Response({
-    status: 200,
-    body: 'hello world'
-  })
-}
-
-/**
- * Final 404 handler.
- */
-function finalhandler (req: Request) {
-  return function () {
-    return Promise.resolve(new Response({
-      status: 404,
-      body: `Cannot ${req.method} ${req.url}`
-    }))
-  }
-}
