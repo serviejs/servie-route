@@ -25,7 +25,7 @@ export function create (verb?: string) {
     log(`${verb || '*'} ${path} -> ${re}`)
 
     return function (req: T, next: () => Promise<Response>): Promise<Response> {
-      if (!matches(req)) return next()
+      if (!matches(req.method)) return next()
 
       const m = req.Url.pathname && re.exec(req.Url.pathname)
 
@@ -56,19 +56,19 @@ function decode (value: string | undefined) {
 }
 
 /**
- * Check request matches.
+ * Check method matches.
  */
-function toMatch (verb?: string): (req: Request) => boolean {
+function toMatch (verb?: string): (method: string) => boolean {
   if (!verb) return () => true
 
   const method = verb.toLowerCase()
 
   if (method === 'get') {
-    return req => {
-      const m = req.method.toLowerCase()
-      return m === 'get' || m === 'head'
+    return m => {
+      const _m = m.toLowerCase()
+      return _m === 'get' || _m === 'head'
     }
   }
 
-  return req => req.method.toLowerCase() === method
+  return m => m.toLowerCase() === method
 }
