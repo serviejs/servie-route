@@ -1,7 +1,7 @@
 import debug = require("debug");
 import pathToRegexp = require("path-to-regexp");
 import { Request, Response } from "servie";
-import { parse } from "url";
+import { getURL } from "servie-url";
 
 const log = debug("servie-route");
 
@@ -28,7 +28,7 @@ export function create(verb?: string) {
     return function(req: T, next: () => Promise<U>): Promise<U> {
       if (!matches(req.method)) return next();
 
-      const pathname = getPathname(req);
+      const { pathname } = getURL(req);
       const m = re.exec(pathname);
 
       if (!m) return next();
@@ -73,34 +73,4 @@ function toMatch(verb?: string): (method: string) => boolean {
   }
 
   return m => m.toLowerCase() === method;
-}
-
-type PathCache = { pathname: string; url: string };
-const map = new WeakMap<Request, PathCache>();
-
-/**
- * Parse pathname from request url.
- */
-function parsePathname(req: Request) {
-  return parse(req.url).pathname || "/";
-}
-
-/**
- * Parse pathname from request instance.
- */
-function getPathname(req: Request): string {
-  const { url } = req;
-
-  if (!map.has(req)) {
-    const pathname = parsePathname(req);
-    map.set(req, { pathname, url });
-    return pathname;
-  }
-
-  const cache = map.get(req)!;
-  if (cache.url === req.url) return cache.pathname;
-
-  const pathname = parsePathname(req);
-  map.set(req, { pathname, url });
-  return pathname;
 }
