@@ -1,74 +1,106 @@
-import debug = require('debug')
-import pathToRegexp = require('path-to-regexp')
-import { Request, Response } from 'servie'
+import debug = require("debug");
+import pathToRegexp = require("path-to-regexp");
+import { Request, Response } from "servie";
+import { parse } from "url";
 
-const log = debug('servie-route')
+const log = debug("servie-route");
 
 export interface RequestParams {
-  params: string[]
+  params: string[];
 }
 
 /**
  * Create a method handler (used internally to create `get`, `post`, etc).
  */
-export function create (verb?: string) {
-  const matches = toMatch(verb)
+export function create(verb?: string) {
+  const matches = toMatch(verb);
 
-  return function <T extends Request> (
+  return function<T extends Request, U extends Response>(
     path: pathToRegexp.Path,
-    fn: (req: T & RequestParams, done: () => Promise<Response>) => Response | Promise<Response>,
+    fn: (req: T & RequestParams, done: () => Promise<U>) => U | Promise<U>,
     options?: pathToRegexp.RegExpOptions
   ) {
-    const keys: pathToRegexp.Key[] = []
-    const re = pathToRegexp(path, keys, options)
+    const keys: pathToRegexp.Key[] = [];
+    const re = pathToRegexp(path, keys, options);
 
-    log(`${verb || '*'} ${path} -> ${re}`)
+    log(`${verb || "*"} ${path} -> ${re}`);
 
-    return function (req: T, next: () => Promise<Response>): Promise<Response> {
-      if (!matches(req.method)) return next()
+    return function(req: T, next: () => Promise<U>): Promise<U> {
+      if (!matches(req.method)) return next();
 
-      const m = req.Url.pathname && re.exec(req.Url.pathname)
+      const pathname = getPathname(req);
+      const m = re.exec(pathname);
 
-      if (!m) return next()
+      if (!m) return next();
 
-      const params = m.slice(1).map(decode)
-      debug(`${req.method} ${path} matches ${req.Url.pathname} ${params}`)
-      return Promise.resolve(fn(Object.assign(req, { params }), next))
-    }
-  }
+      const params = m.slice(1).map(decode);
+      debug(`${req.method} ${path} matches ${pathname} ${params}`);
+      return Promise.resolve(fn(Object.assign(req, { params }), next));
+    };
+  };
 }
 
 /**
  * Declare common methods.
  */
-export const all = create()
-export const get = create('get')
-export const put = create('put')
-export const post = create('post')
-export const patch = create('patch')
-export const del = create('delete')
+export const all = create();
+export const get = create("get");
+export const put = create("put");
+export const post = create("post");
+export const patch = create("patch");
+export const del = create("delete");
 
 /**
  * Decode path fragments.
  */
-function decode (value: string | undefined) {
-  return value ? decodeURIComponent(value) : ''
+function decode(value: string | undefined) {
+  return value ? decodeURIComponent(value) : "";
 }
 
 /**
  * Check method matches.
  */
-function toMatch (verb?: string): (method: string) => boolean {
-  if (!verb) return () => true
+function toMatch(verb?: string): (method: string) => boolean {
+  if (!verb) return () => true;
 
-  const method = verb.toLowerCase()
+  const method = verb.toLowerCase();
 
-  if (method === 'get') {
+  if (method === "get") {
     return m => {
-      const _m = m.toLowerCase()
-      return _m === 'get' || _m === 'head'
-    }
+      const _m = m.toLowerCase();
+      return _m === "get" || _m === "head";
+    };
   }
 
-  return m => m.toLowerCase() === method
+  return m => m.toLowerCase() === method;
+}
+
+type PathCache = { pathname: string; url: string };
+const map = new WeakMap<Request, PathCache>();
+
+/**
+ * Parse pathname from request url.
+ */
+function parsePathname(req: Request) {
+  return parse(req.url).pathname || "/";
+}
+
+/**
+ * Parse pathname from request instance.
+ */
+function getPathname(req: Request): string {
+  const { url } = req;
+
+  if (!map.has(req)) {
+    const pathname = parsePathname(req);
+    map.set(req, { pathname, url });
+    return pathname;
+  }
+
+  const cache = map.get(req)!;
+  if (cache.url === req.url) return cache.pathname;
+
+  const pathname = parsePathname(req);
+  map.set(req, { pathname, url });
+  return pathname;
 }

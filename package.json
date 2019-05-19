@@ -8,11 +8,13 @@
     "dist/"
   ],
   "scripts": {
+    "prettier": "prettier --write",
+    "format": "npm run prettier -- \"{.,src/**}/*.{js,ts,json,md,yml,css}\"",
     "lint": "tslint \"src/**/*.ts\" --project tsconfig.json",
-    "build": "rm -rf dist/ && tsc",
+    "build": "rimraf dist/ && tsc",
     "specs": "jest --coverage",
-    "test": "npm run -s lint && npm run -s build && npm run -s specs",
-    "prepublish": "npm run build"
+    "test": "npm run lint && npm run build && npm run specs",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -39,25 +41,52 @@
     "url": "https://github.com/serviejs/servie-route/issues"
   },
   "homepage": "https://github.com/serviejs/servie-route",
+  "jest": {
+    "roots": [
+      "<rootDir>/src/"
+    ],
+    "transform": {
+      "\\.tsx?$": "ts-jest"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,json,md,yml,css}": [
+      "npm run prettier",
+      "git add"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
-    "@types/debug": "0.0.30",
-    "@types/jest": "^22.2.3",
-    "@types/node": "^9.6.6",
-    "jest": "^22.4.3",
+    "@types/debug": "^4.1.4",
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.0.2",
+    "husky": "^2.3.0",
+    "jest": "^24.8.0",
+    "lint-staged": "^8.1.7",
+    "prettier": "^1.17.1",
     "rimraf": "^2.5.4",
-    "servie": "^3.0.0",
-    "servie-finalhandler": "^1.1.0",
-    "servie-send": "^1.1.0",
-    "throwback": "^2.0.0",
+    "servie": "^4.0.5",
+    "servie-finalhandler": "^2.0.0",
+    "servie-send": "^2.0.0",
+    "throwback": "^4.0.0",
+    "ts-jest": "^24.0.2",
     "tslint": "^5.9.1",
-    "tslint-config-standard": "^7.0.0",
-    "typescript": "^2.8.3"
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.4.5"
   },
   "peerDependencies": {
     "servie": ">=1"
   },
   "dependencies": {
-    "debug": "^3.1.0",
-    "path-to-regexp": "^2.2.0"
+    "debug": "^4.1.1",
+    "path-to-regexp": "^3.0.0"
   }
 }

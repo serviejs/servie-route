@@ -16,23 +16,19 @@ npm install servie-route --save
 ## Usage
 
 ```ts
-import { get, post } from 'servie-route'
-import { compose } from 'throwback'
+import { get, post } from "servie-route";
+import { compose } from "throwback";
 
-const animals = [
-  'rabbit',
-  'dog',
-  'cat'
-]
+const animals = ["rabbit", "dog", "cat"];
 
 const app = compose([
-  get('/pets', function () {
-    return new Response({ body: animals })
+  get("/pets", function() {
+    return new Response(animals.join("\n"));
   }),
-  get('/pets/:id', function (req) {
-    return new Response({ body: animals[Number(req.params[0])] })
+  get("/pets/:id", function(req) {
+    return new Response(animals[Number(req.params[0])]);
   })
-])
+]);
 ```
 
 ## TypeScript
