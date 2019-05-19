@@ -83,7 +83,7 @@
     "typescript": "^3.4.5"
   },
   "peerDependencies": {
-    "servie": ">=1"
+    "servie": "^4.0.0"
   },
   "dependencies": {
     "debug": "^4.1.1",
