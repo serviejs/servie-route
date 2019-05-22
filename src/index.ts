@@ -1,6 +1,6 @@
 import debug = require("debug");
 import pathToRegexp = require("path-to-regexp");
-import { Request, Response } from "servie";
+import { CommonRequest, CommonResponse } from "servie/dist/common";
 import { getURL } from "servie-url";
 
 const log = debug("servie-route");
@@ -15,7 +15,7 @@ export interface RequestParams {
 export function create(verb?: string) {
   const matches = toMatch(verb);
 
-  return function<T extends Request, U extends Response>(
+  return function<T extends CommonRequest, U extends CommonResponse>(
     path: pathToRegexp.Path,
     fn: (req: T & RequestParams, done: () => Promise<U>) => U | Promise<U>,
     options?: pathToRegexp.RegExpOptions
