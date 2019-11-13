@@ -1,5 +1,5 @@
 import debug = require("debug");
-import pathToRegexp = require("path-to-regexp");
+import { pathToRegexp, TokensToRegexpOptions, Path } from "path-to-regexp";
 import { CommonRequest, CommonResponse } from "servie/dist/common";
 import { getURL } from "servie-url";
 
@@ -16,12 +16,14 @@ export function create(verb?: string) {
   const matches = toMatch(verb);
 
   return function<T extends CommonRequest, U extends CommonResponse>(
-    path: pathToRegexp.Path,
+    path: Path,
     fn: (req: T & RequestParams, done: () => Promise<U>) => U | Promise<U>,
-    options?: pathToRegexp.RegExpOptions
+    options?: TokensToRegexpOptions
   ) {
-    const keys: pathToRegexp.Key[] = [];
-    const re = pathToRegexp(path, keys, options);
+    const re = pathToRegexp(path, undefined, {
+      encode: encodeURI,
+      ...options
+    });
 
     log(`${verb || "*"} ${path} -> ${re}`);
 
