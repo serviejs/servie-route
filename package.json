@@ -1,6 +1,6 @@
 {
   "name": "servie-route",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "Simple route middleware for Servie",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
