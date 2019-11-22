@@ -18,7 +18,9 @@ export type Fn<T extends CommonRequest, U extends CommonResponse> = (
 /**
  * Allowed `path-to-regexp` options.
  */
-export type Options = Record<"end" | "start" | "strict" | "sensitive", boolean>;
+export type Options = Partial<
+  Record<"end" | "start" | "strict" | "sensitive", boolean>
+>;
 
 export interface RequestParams<T extends object> {
   [params]: T;
