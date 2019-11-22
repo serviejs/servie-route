@@ -1,7 +1,7 @@
 {
   "name": "servie-route",
   "version": "2.1.0",
-  "description": "Simple route middleware for Servie",
+  "description": "Simple route middleware for Servie using Path-To-Regexp",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -86,7 +86,6 @@
     "servie": "^4.0.0"
   },
   "dependencies": {
-    "debug": "^4.1.1",
     "path-to-regexp": "^6.1.0",
     "servie-url": "^1.0.1"
   }

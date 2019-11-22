@@ -1,78 +1,87 @@
-import debug = require("debug");
-import { pathToRegexp, TokensToRegexpOptions, Path } from "path-to-regexp";
 import { CommonRequest, CommonResponse } from "servie/dist/common";
 import { getURL } from "servie-url";
+import { match, Path } from "path-to-regexp";
 
-const log = debug("servie-route");
+/**
+ * Add `params` to the request object.
+ */
+export const params = Symbol("params");
 
-export interface RequestParams {
-  params: string[];
+/**
+ * Valid input function type.
+ */
+export type Fn<T extends CommonRequest, U extends CommonResponse> = (
+  req: T,
+  done: () => Promise<U>
+) => U | Promise<U>;
+
+/**
+ * Allowed `path-to-regexp` options.
+ */
+export type Options = Record<"end" | "start" | "strict" | "sensitive", boolean>;
+
+export interface RequestParams<T extends object> {
+  [params]: T;
 }
 
 /**
- * Create a method handler (used internally to create `get`, `post`, etc).
+ * The `path` function matches request paths against `path-to-regexp`.
  */
-export function create(verb?: string) {
-  const matches = toMatch(verb);
+export function path<
+  T extends CommonRequest,
+  U extends CommonResponse,
+  P extends object = object
+>(path: Path, fn: Fn<T & RequestParams<P>, U>, options?: Options) {
+  const check = match<P>(path, {
+    encode: encodeURI,
+    decode: decodeURIComponent,
+    ...options
+  });
 
-  return function<T extends CommonRequest, U extends CommonResponse>(
-    path: Path,
-    fn: (req: T & RequestParams, done: () => Promise<U>) => U | Promise<U>,
-    options?: TokensToRegexpOptions
-  ) {
-    const re = pathToRegexp(path, undefined, {
-      encode: encodeURI,
-      ...options
-    });
+  return async function pathMiddleware(req: T, next: () => Promise<U>) {
+    const { pathname } = getURL(req);
+    const m = check(pathname);
+    if (!m) return next();
 
-    log(`${verb || "*"} ${path} -> ${re}`);
+    return fn(Object.assign(req, { [params]: m.params }), next);
+  };
+}
 
-    return function(req: T, next: () => Promise<U>): Promise<U> {
-      if (!matches(req.method)) return next();
+/**
+ * Match requests against a method.
+ */
+export function method<T extends CommonRequest, U extends CommonResponse>(
+  method: string,
+  fn: Fn<T, U>
+) {
+  const verb = method.toLowerCase();
 
-      const { pathname } = getURL(req);
-      const m = re.exec(pathname);
+  return async function methodMiddleware(req: T, next: () => Promise<U>) {
+    if (req.method.toLowerCase() !== verb) return next();
+    return fn(req, next);
+  };
+}
 
-      if (!m) return next();
-
-      const params = m.slice(1).map(decode);
-      debug(`${req.method} ${path} matches ${pathname} ${params}`);
-      return Promise.resolve(fn(Object.assign(req, { params }), next));
-    };
+/**
+ * Support shorthand path methods.
+ */
+export function create(verb: string) {
+  return function pathWithMethod<
+    T extends CommonRequest,
+    U extends CommonResponse,
+    P extends object = object
+  >(str: Path, fn: Fn<T & RequestParams<P>, U>, options?: Options) {
+    return path<T, U, P>(str, method(verb, fn), options);
   };
 }
 
 /**
  * Declare common methods.
  */
-export const all = create();
 export const get = create("get");
+export const head = create("head");
 export const put = create("put");
 export const post = create("post");
 export const patch = create("patch");
 export const del = create("delete");
-
-/**
- * Decode path fragments.
- */
-function decode(value: string | undefined) {
-  return value ? decodeURIComponent(value) : "";
-}
-
-/**
- * Check method matches.
- */
-function toMatch(verb?: string): (method: string) => boolean {
-  if (!verb) return () => true;
-
-  const method = verb.toLowerCase();
-
-  if (method === "get") {
-    return m => {
-      const _m = m.toLowerCase();
-      return _m === "get" || _m === "head";
-    };
-  }
-
-  return m => m.toLowerCase() === method;
-}
+export const options = create("options");
